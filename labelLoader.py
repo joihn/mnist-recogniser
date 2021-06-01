@@ -125,7 +125,7 @@ class Loader():
         return testImg, testLabels
 
     def getExam(self):
-
+        #a
         EXAM_SET = 7 # put 8 when ready
 
         nP = 4
