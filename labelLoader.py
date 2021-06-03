@@ -126,7 +126,7 @@ class Loader():
 
     def getExam(self):
         #a
-        EXAM_SET = 7 # put 8 when ready
+        EXAM_SET = 8 # put 8 when ready
 
         nP = 4
         nR = 13
