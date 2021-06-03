@@ -79,6 +79,35 @@ class Loader():
             plt.imshow(smallImg, cmap="gray")
             plt.show()
         return smallImg
+    def getSmallSuit(self, g, r, p, plotFlag=False):
+        pathIm = f"suits/game_{g}_round_{r}_player_{p}.png"
+
+        if os.path.isfile(pathIm):
+            im = cv.imread(pathIm)
+
+        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        if plotFlag:
+            plt.imshow(gray)
+            plt.show()
+
+        histo, imgBin = cv.threshold(gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        if plotFlag:
+            plt.imshow(imgBin)
+            plt.show()
+            # plt.hist(histo.ravel(), 256)
+            # plt.show()
+        squarred = imgBin
+        squarred = cv2.bitwise_not(squarred)
+        smallImg = cv2.resize(squarred, (28, 28))
+        if plotFlag:
+            plt.imshow(squarred, cmap="gray")
+            plt.show()
+
+            plt.imshow(smallImg, cmap="gray")
+            plt.show()
+
+        return smallImg
+
 
     def getNumberAndLabel(self, g, r, p):
         return self.getSmallNumber(g, r, p), self.getNumLabel(g, r, p)
@@ -89,8 +118,6 @@ class Loader():
         nG = 6
         trainlabels = torch.empty((nG, nR, nP))
         trainImg = torch.empty((nG, nR, nP, 1, 28, 28))
-
-
 
         for g in range(1, nG + 1):
             for r in range(1, nR + 1):
@@ -104,6 +131,26 @@ class Loader():
 
         trainImg.sub_(self.mean).div_(self.std)
         return trainImg, trainlabels
+
+    def getTrainTestSuits(self, inter_img):
+        trainlabels = torch.empty(len(inter_img))
+        trainImg = torch.empty(len(inter_img), 1, 28, 28)
+        for i, (g,r,p) in enumerate(inter_img):
+
+            if self.getSuit(g,r,p)=="C":
+                trainlabels[i]=0
+            else:
+                trainlabels[i]=1 #for the S
+
+            trainImg[i] = torch.from_numpy(self.getSmallSuit(g,r,p,False)/255)
+
+        mean = trainImg.mean()
+        std = trainImg.std()
+
+        trainImg.sub_(mean).div_(std)
+
+        return trainImg, trainlabels
+
 
     def getTest(self):
 
