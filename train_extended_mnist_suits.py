@@ -12,21 +12,21 @@ import numpy as np
 def train(train_input, train_label, model, optimizer, log_interval, epoch, criterion):
     model.train()
     global trainLossL
-    for g in range(train_input.shape[0]):
-        inputs = train_input[g].view(-1, 1, 28, 28)
-        labels = train_label[g].view(-1)
+  #  for g in range(train_input.shape[0]):
+    inputs = train_input.view(-1, 1, 28, 28)
+    labels = train_label.view(-1)
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
+    # zero the parameter gradients
+    optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs = model(inputs)
-        loss = criterion(outputs, labels.long())
-        loss.backward()
-        optimizer.step()
+    # forward + backward + optimize
+    outputs = model(inputs)
+    loss = criterion(outputs, labels.long())
+    loss.backward()
+    optimizer.step()
 
-        print(f"train epoch {epoch}, batch {g}, loss {loss}")
-        trainLossL.append(loss)
+    print(f"train epoch {epoch}, loss {loss}")
+    trainLossL.append(loss)
 
 def test(test_input, test_label, model, criterion, plotFlag=False):
     model.eval()  # Sets the module in evaluation mode.
@@ -42,7 +42,7 @@ def test(test_input, test_label, model, criterion, plotFlag=False):
         test_loss = criterion(outputs, labels).item()  # sum up batch loss
         pred = outputs.argmax(dim=1, keepdim=True)
 
-        test_label[test_label in ["J", "Q", "K"]] = 10
+        #test_label[test_label in ["J", "Q", "K"]] = 10
 
         correctPred = pred.eq(labels.view_as(pred)).sum().item()
         logArrayClass = (labels==10)
@@ -66,13 +66,12 @@ loader = Loader("C:/Users/maxim/Google Drive/Epfl/MA4/Img analysis/project/iapr/
 model = LeNet5_like()
 
 model.load_state_dict(torch.load("saved_models/mod1.pkl"))
-model.fc3 = nn.Linear(84, 11)
 
-img, lab = loader.getNumberAndLabel(6, 5, 4)
-meanMnist, stdMnist = 0.1307, 0.3081
+model.fc1 = nn.Linear(16*5*5, 60)
+model.fc2 = nn.Linear(60, 20)
+model.fc3 = nn.Linear(20, 2)
 
-tempImg = torch.from_numpy(img).view(-1, 1, 28, 28).float().sub(meanMnist).div(stdMnist)
-output = model(tempImg)
+
 
 
 model.conv1.weight.requires_grad = False
@@ -89,7 +88,7 @@ model.fc3.bias.requires_grad = True
 
 
 # optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.5)
-optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=5e-3)
+optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3, weight_decay=1e-3)
 
 # optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
@@ -98,10 +97,13 @@ testLossL = []
 
 criterion = nn.CrossEntropyLoss(reduction='mean')
 
-epochs = 10  # how many epochs to train for
+epochs = 50  # how many epochs to train for
 log_interval = 1  # how many batches to wait before logging training status
-train_input, train_label = loader.getTrain()
-test_input, test_label = loader.getTest()
+# train_input, train_label = loader.getTrain()
+# test_input, test_label = loader.getTest()
+
+import suites_loader
+train_input, train_label, test_input, test_label = suites_loader.getSuitsData()
 
 test(test_input, test_label, model, criterion)
 
@@ -111,15 +113,15 @@ for epoch in range(1, epochs + 1):
 
 #%%
 
-plt.plot(trainLossL[1:], label = "train")
-plt.plot(np.arange(0,len(testLossL[1:]))*7,testLossL[1:], label = "test")
+plt.plot(trainLossL[0:], label = "train")
+plt.plot(np.arange(0,len(testLossL[0:]))*1,testLossL[0:], label = "test")
 plt.legend()
-plt.title(f"last epoch avg train loss {torch.tensor(trainLossL[-5:]).mean()} \n test loss {testLossL[-1]}")
+plt.title(f"last epoch avg train loss {torch.tensor(trainLossL[-1])} \n test loss {testLossL[-1]}")
 plt.show()
 
 
 
 #%%
-torch.save(model.state_dict(), r"C:\Users\maxim\Google Drive\Epfl\MA4\Img analysis\project\mnist recogniser\saved_models\modExtendedV2.pkl")
+torch.save(model.state_dict(), r"C:\Users\maxim\Google Drive\Epfl\MA4\Img analysis\project\mnist recogniser\saved_models\modExtSuits.pkl")
 
 
